@@ -12,7 +12,9 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-		<RepositoryUrl>https://github.com/jesus-uoc/FastDto</RepositoryUrl>
+		<RepositoryUrl>https://github.com/jesus-uoc/FastDto.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageProjectUrl>https://github.com/jesus-uoc/FastDto</PackageProjectUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
