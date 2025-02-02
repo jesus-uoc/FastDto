@@ -75,6 +75,20 @@ namespace FastDTO
             code.AppendLine("        }");
 
 
+            code.AppendLine($"        public static List<TTarget> NewListFrom<TTarget>(this IEnumerable<{interfaceName}> source)");
+            code.AppendLine($"            where TTarget : {interfaceName}, new()");
+            code.AppendLine("        {");
+            code.AppendLine("            var target = new List<TTarget>();");
+            code.AppendLine("            foreach (var item in source)");
+            code.AppendLine("            {");
+            code.AppendLine("               var newItem = item.NewFrom<TTarget>();");
+            code.AppendLine("               target.Add(newItem);");
+            code.AppendLine("            }");
+            code.AppendLine("            return target;");
+
+            code.AppendLine("        }");
+
+
             code.AppendLine("    }");
             code.AppendLine("}");
 
