@@ -60,6 +60,21 @@ namespace FastDTO
             }
 
             code.AppendLine("        }");
+
+            code.AppendLine($"        public static TTarget NewFrom<TTarget>(this {interfaceName} source)");
+            code.AppendLine($"            where TTarget : {interfaceName}, new()");
+            code.AppendLine("        {");
+            code.AppendLine("            var target = new TTarget();");
+
+            foreach (var prop in interfaceSymbol.GetMembers().OfType<IPropertySymbol>())
+            {
+                code.AppendLine($"            target.{prop.Name} = source.{prop.Name};");
+            }
+            code.AppendLine("            return target;");
+
+            code.AppendLine("        }");
+
+
             code.AppendLine("    }");
             code.AppendLine("}");
 
