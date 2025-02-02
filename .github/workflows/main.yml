@@ -1,44 +1,82 @@
-name: dotnet package
+name: Build & Publish NuGet to GitHub Registry
 
-on: [push]
+on:
+  push:
+    branches: [master]
 
 env:
-  PROJECT_FOLDER: <projectfolder>
-  TEST_PROJECT: <testprojectfolder>.csproj
-  PROJECT: <project>.csproj
-  NUGET_REPO_URL: https://nuget.pkg.github.com/jesus-uoc/index.json
-
+  user: "jesus-uoc"
+  organization: "nothing"
+  project: "FastDTO/"
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dotnet-version: [ '8.0.x' ]
+    outputs:
+      Version: ${{ steps.gitversion.outputs.SemVer }}
+      CommitsSinceVersionSource: ${{ steps.gitversion.outputs.CommitsSinceVersionSource }}
 
     steps:
       - uses: actions/checkout@v4
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: | 
-            8.0.x
+          fetch-depth: 0 #fetch-depth is needed for GitVersion
 
-      - name: Install Dependencies
-        run: dotnet restore $PROJECT_FOLDER/$PROJECT
+      #Install and calculate the new version with GitVersion
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.10.2
+        with:
+          versionSpec: 5.x
 
-      - name: Build Project
-        run: dotnet build $PROJECT_FOLDER/$PROJECT
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@v0.10.2
+        id: gitversion # step id used as reference for output values
 
-      - name: Install Test Project Dependencies
-        run: dotnet restore $TEST_PROJECT
+      - name: Display GitVersion outputs
+        run: |
+          echo "Version: ${{ steps.gitversion.outputs.SemVer }}"
+          echo "CommitsSinceVersionSource: ${{ steps.gitversion.outputs.CommitsSinceVersionSource }}"
 
-      - name: Test with dotnet
-        run: dotnet test $TEST_PROJECT
+      # Build/pack the project
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3.2.0
+        with:
+          dotnet-version: 8.0.x
 
-      - name: Create the package
-        run: dotnet pack --configuration Release $PROJECT_FOLDER/$PROJECT
+      - name: Build and Pack NuGet package with versioning
+        run: dotnet pack ${{ env.project }} -p:Version='${{ steps.gitversion.outputs.SemVer }}' -c Release
 
-      - name: Publish the package to Rository
-        run: dotnet nuget push $PROJECT_FOLDER/bin/Release/*.nupkg -k ${{ secrets.G_TOKEN }} -s $NUGET_REPO_URL
+      - name: Upload NuGet package to GitHub
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: nugetPackage
+          path: ${{ env.project }}bin/Release/*.nupkg
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master' # only run job if on the master branch
+
+    steps:
+      #Push NuGet package to GitHub packages
+      - name: Download nuget package artifact
+        uses: actions/download-artifact@v3.0.2
+        with:
+          name: nugetPackage
+          path: nugetPackage
+
+      - name: Prep packages
+        run: dotnet nuget add source --username ${{ env.user }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ env.organization }}/index.json"
+
+      - name: Push package to GitHub packages
+        if: needs.build.outputs.CommitsSinceVersionSource > 0 #Only release if there has been a commit/version change
+        run: dotnet nuget push nugetPackage/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source "github"
+
+      #Create release
+      - name: Create Release
+        if: needs.build.outputs.CommitsSinceVersionSource > 0 #Only release if there has been a commit/version change
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          tag: ${{ needs.build.outputs.Version }}
+          name: Release ${{ needs.build.outputs.Version }}
+          artifacts: "nugetPackage/*"
+          token: ${{ secrets.GITHUB_TOKEN }}
