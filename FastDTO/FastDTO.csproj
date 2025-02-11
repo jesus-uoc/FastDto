@@ -6,7 +6,7 @@
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>true</IncludeBuildOutput>
-		<Version>1.0.5</Version>
+		<Version>1.0.7</Version>
 		<Authors>Tu Nombre</Authors>
 		<Description>Generador para copiar propiedades entre clases vía interfaz</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

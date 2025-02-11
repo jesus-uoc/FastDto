@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -44,6 +45,8 @@ namespace FastDTO
         {
             var interfaceName = interfaceSymbol.ToDisplayString();
 
+            var allProperties = GetAllProperties(interfaceSymbol);
+
             var code = new StringBuilder();
             code.AppendLine($"namespace {interfaceSymbol.ContainingNamespace}");
             code.AppendLine("{");
@@ -54,11 +57,10 @@ namespace FastDTO
             code.AppendLine($"            where TTarget : {interfaceName}");
             code.AppendLine("        {");
 
-            foreach (var prop in interfaceSymbol.GetMembers().OfType<IPropertySymbol>())
+            foreach (var prop in allProperties)
             {
                 code.AppendLine($"            target.{prop.Name} = source.{prop.Name};");
             }
-
             code.AppendLine("        }");
 
             code.AppendLine($"        public static TTarget NewFrom<TTarget>(this {interfaceName} source)");
@@ -66,7 +68,7 @@ namespace FastDTO
             code.AppendLine("        {");
             code.AppendLine("            var target = new TTarget();");
 
-            foreach (var prop in interfaceSymbol.GetMembers().OfType<IPropertySymbol>())
+            foreach (var prop in allProperties)
             {
                 code.AppendLine($"            target.{prop.Name} = source.{prop.Name};");
             }
@@ -93,6 +95,15 @@ namespace FastDTO
             code.AppendLine("}");
 
             return code.ToString();
+            
+        }
+
+        private static IEnumerable<IPropertySymbol> GetAllProperties(INamedTypeSymbol symbol)
+        {
+            // Combinar propiedades propias y heredadas
+            return symbol.AllInterfaces
+                .SelectMany(i => i.GetMembers().OfType<IPropertySymbol>())
+                .Concat(symbol.GetMembers().OfType<IPropertySymbol>());
         }
     }
 
