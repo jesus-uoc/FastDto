@@ -28,6 +28,10 @@ internal class Program
         var destino3 = new Persona();
         destino3.CopyFrom(origen3);
 
+        var origen4 = new Persona4 { Edad = 30, OtraPropiedad = "hola" };
+        Persona destino4 = orgien3.NewFrom<Persona>();
+
+        List<Persona> destino5 = origen3.NewListFrom<Persona>();
     }
 }
 [CopyByInterfaz]
