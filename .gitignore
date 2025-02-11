@@ -3,9 +3,9 @@
 ################################################################################
 
 /.vs
+/ConsoleApp1
 /FastDTO/obj
 /FastDTO/bin
-/FastDTO/FastDTO.csproj~RF7d44bbb.TMP
 /FastDTO.sln
 /ConsoleApp1/ConsoleApp1.csproj
 /ConsoleApp1/Program.cs
